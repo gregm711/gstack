@@ -382,6 +382,7 @@ Review for these properties:
 5. **Abstraction discipline** — did the change introduce an abstraction that is more complex than the concrete code it replaced?
 6. **Modularity** — are interfaces narrow and responsibilities cohesive?
 7. **Performance sanity** — any needless passes, allocations, or hot-path work?
+8. **Foundation integrity** — is this change building on solid ground, or on code that is broken, misleading, or structurally wrong?
 
 ## Step 1: Understand the subsystem
 
@@ -407,7 +408,34 @@ Invariant / state: ...
 
 Do not emit findings before this model exists.
 
-## Step 2: Find simplicity regressions
+## Step 2: Foundation check
+
+Before judging the diff's own quality, check whether it's building on solid ground.
+
+A great engineer distinguishes **foundation problems** from **facade problems**:
+
+- **Foundation:** code the change builds *on top of* — calls, extends, depends on, or assumes the correctness of. If this code is broken, misleading, or structurally wrong, the new work inherits the rot.
+- **Facade:** code *next to* the change that is ugly, outdated, or suboptimal, but doesn't affect the change's correctness or maintainability.
+
+**The test:** "Will this change be wrong or fragile if the pre-existing problem isn't fixed?"
+
+- Yes → flag it as a foundation issue. The author should fix it first, in a separate commit, before the feature work.
+- No → it's a facade issue. Note it at most as informational. Do not block on it.
+
+Examples:
+
+| Situation | Foundation or Facade? |
+|---|---|
+| Function being called has a subtle bug that will affect the new codepath | Foundation — fix first |
+| Variable names in the file are terrible but correct | Facade — leave it |
+| Module being extended has no error handling and the new feature adds a failure mode | Foundation — add the error handling the feature needs |
+| Adjacent module uses an old pattern but works fine | Facade — leave it |
+| Shared helper the change depends on swallows errors silently | Foundation — fix the helper |
+| Test file is disorganized but tests pass | Facade — leave it |
+
+If you find foundation issues, include them in the output as a separate category before the simplicity findings.
+
+## Step 3: Find simplicity regressions
 
 Flag only real issues. Prioritize:
 
@@ -419,7 +447,7 @@ Flag only real issues. Prioritize:
 - Premature generalization for hypothetical future use
 - Hot-path inefficiency that comes from unnecessary abstraction
 
-## Step 3: Do not make these mistakes
+## Step 4: Do not make these mistakes
 
 - Do **not** flag duplication when the duplicated code is clearer than the abstraction.
 - Do **not** reward cleverness.
@@ -429,7 +457,23 @@ Flag only real issues. Prioritize:
 
 ## Output format
 
-If issues exist:
+If foundation issues exist, list them first:
+
+```text
+CARMACK REVIEW: N issues (F foundation, S simplicity)
+
+FOUNDATION — fix before building on this
+1. [file:line] Problem
+   Why the change is fragile without this fix: ...
+   Minimal fix: ...
+
+SIMPLICITY
+2. [file:line] Problem
+   Why it makes the system harder to understand: ...
+   Simpler direction: ...
+```
+
+If only simplicity issues exist:
 
 ```text
 CARMACK REVIEW: N issues
@@ -437,19 +481,21 @@ CARMACK REVIEW: N issues
 1. [file:line] Problem
    Why it makes the system harder to understand: ...
    Simpler direction: ...
-
-2. [file:line] Problem
-   Why it makes the system harder to understand: ...
-   Simpler direction: ...
 ```
 
 If no issues exist:
 
 ```text
-CARMACK REVIEW: no simplicity regressions found.
+CARMACK REVIEW: no issues found. Foundation is solid, no simplicity regressions.
 ```
 
 ## Severity guidance
+
+**Foundation (fix first)**
+- Bug in code the change depends on that will cause incorrect behavior
+- Missing error handling in a codepath the change introduces a new failure mode to
+- Broken invariant or silent data loss in a function the change calls
+- Misleading interface that will cause the author (or the next person) to use it wrong
 
 **High severity**
 - Wrong ownership boundary
@@ -462,6 +508,7 @@ CARMACK REVIEW: no simplicity regressions found.
 - Unnecessary helper extraction
 - Naming/interface choices that make local reasoning worse
 - Config or genericity that could become direct code
+- Facade issues in adjacent code (note, don't block)
 
 ## Final test
 

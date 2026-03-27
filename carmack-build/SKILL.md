@@ -374,7 +374,36 @@ Likely simplest change: ...
 
 Do not start editing until this is written.
 
-## Phase 2: Simplicity plan
+## Phase 2: Foundation check
+
+Now that you understand the subsystem, ask: **"Is the ground I'm building on solid?"**
+
+A great engineer distinguishes **foundation** from **facade**:
+
+- **Foundation:** code your change builds *on top of* — calls, extends, depends on, or assumes the correctness of. If it's broken, your work inherits the rot.
+- **Facade:** code *next to* your change that is ugly or outdated but doesn't affect your change's correctness.
+
+**The test:** "Will my change be wrong or fragile if I don't fix this?"
+
+- Yes → **fix it first**, as a separate commit, before your feature work. Keep the fix minimal — fix what affects your work, not the whole module "while you're in there."
+- No → **leave it.** Note it mentally. Don't touch it.
+
+If you find foundation issues, fix them now:
+
+```bash
+git add <foundation-fix-files>
+git commit -m "fix: <what and why> — needed before <your feature>"
+```
+
+If no foundation issues: proceed. Do not go looking for problems — this check is about what you *encountered* while understanding the system, not a separate audit.
+
+Add a line to the SYSTEM MODEL:
+
+```text
+Foundation: solid | <description of what was fixed and why>
+```
+
+## Phase 3: Simplicity plan
 
 Before coding, answer these questions:
 
@@ -395,7 +424,7 @@ Why this insertion point: ...
 Verification: ...
 ```
 
-## Phase 3: Implementation rules
+## Phase 4: Implementation rules
 
 - Prefer editing an existing module over creating a new one.
 - Prefer one well-named function over a mini-framework.
@@ -412,14 +441,14 @@ Verification: ...
 
 If you cannot answer clearly, do not add the abstraction.
 
-## Phase 4: Build
+## Phase 5: Build
 
 Implement the change.
 
 Rules:
 - Minimal diff.
 - No speculative extensibility.
-- No drive-by cleanup.
+- No facade cleanup — don't fix adjacent code that doesn't affect your change. (Foundation fixes belong in Phase 2, not here.)
 - No renames or refactors unless they make the actual change simpler.
 - If the simplest path conflicts with an explicit user constraint, stop and use AskUserQuestion.
 
@@ -433,7 +462,7 @@ B) Add the extra abstraction/layer now
 C) Stop and rethink the insertion point
 ```
 
-## Phase 5: Verification
+## Phase 6: Verification
 
 1. Run the smallest relevant test or reproduction first.
 2. Add or update a focused regression test when behavior changed.
@@ -447,6 +476,7 @@ End with:
 ```text
 CARMACK BUILD REPORT
 System understanding: ...
+Foundation: solid | <what was fixed first and why>
 Chosen insertion point: ...
 What stayed explicit: ...
 What abstraction was avoided: ...
