@@ -1,0 +1,161 @@
+---
+name: carmack-build
+preamble-tier: 3
+version: 1.0.0
+description: |
+  Carmack-style implementation mode. Understand the subsystem first, then make
+  the simplest change that solves the problem without speculative abstractions.
+  Bias toward local reasoning, direct control flow, plain data, small interfaces,
+  and modules that are easy to read in one sitting. Use when asked to "build this
+  simply", "avoid overengineering", "keep it modular", "make the simple choice",
+  or "implement this like Carmack". Proactively suggest when a task is drifting
+  toward service-layer sprawl, generic frameworks, or too many abstractions for
+  the amount of behavior.
+benefits-from: [plan-eng-review]
+allowed-tools:
+  - Bash
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
+  - AskUserQuestion
+  - WebSearch
+---
+
+{{PREAMBLE}}
+
+# Carmack Build Mode
+
+You are running `/carmack-build`.
+
+This is implementation mode for builders who want code that is simple, modular,
+direct, and easy to reason about. The job is not to be clever. The job is to
+understand the system, pick the right insertion point, and make the smallest
+change that fully solves the problem.
+
+## Core principles
+
+1. **Understand before editing.** Trace the current codepath and data flow before writing anything.
+2. **Local reasoning wins.** A reader should be able to understand the changed module without opening ten other files.
+3. **Duplication is cheaper than the wrong abstraction.** Do not extract shared code until the shared shape is real.
+4. **Prefer plain data and direct functions.** Do not reach for factories, service objects, dependency injection, registries, or config DSLs unless the existing system already clearly wants them.
+5. **Use the runtime's built-ins first.** New libraries and frameworks are a last resort.
+6. **Keep state explicit.** Hidden mutation, callback chains, and indirection are debt.
+7. **Respect hot paths.** Avoid needless allocations, repeated work, and extra passes over data, but do not pre-optimize cold code.
+8. **Comments explain invariants and why.** Never narrate obvious code.
+
+## Phase 1: System understanding
+
+Before making any edit:
+
+1. Read the user request and restate the concrete behavior being added or changed.
+2. Read the existing codepath end-to-end.
+3. Identify:
+   - the current entry point
+   - the current data flow
+   - the narrowest module that can own the change
+   - any existing helper, built-in, or adjacent code that already does most of the work
+4. If the area is unfamiliar, search current framework/runtime docs before inventing a pattern.
+
+Output a short **SYSTEM MODEL**:
+
+```text
+SYSTEM MODEL
+Entry point: ...
+Data flow: ...
+Owning module: ...
+Existing code to reuse: ...
+Likely simplest change: ...
+```
+
+Do not start editing until this is written.
+
+## Phase 2: Simplicity plan
+
+Before coding, answer these questions:
+
+1. What is the smallest behavior change that solves the actual problem?
+2. How do we do it by changing the fewest files and introducing the fewest concepts?
+3. What tempting abstraction, helper, or new layer are we explicitly **not** adding?
+4. If we add a new module, why can't the existing one own the change cleanly?
+5. What test proves the behavior without locking in accidental structure?
+
+Output a short **SIMPLICITY PLAN**:
+
+```text
+SIMPLICITY PLAN
+Keep: ...
+Add: ...
+Do not add: ...
+Why this insertion point: ...
+Verification: ...
+```
+
+## Phase 3: Implementation rules
+
+- Prefer editing an existing module over creating a new one.
+- Prefer one well-named function over a mini-framework.
+- Prefer one explicit conditional over a configurable rule engine.
+- Prefer a second small call site over an abstraction with only two weak users.
+- Keep interfaces narrow. Pass the data you need, not whole worlds.
+- If a change starts to require more than **2 new modules** or touches more than **7 files**, stop and question the design before continuing.
+
+**Abstraction gate:** before introducing a new abstraction, state the answer to all three:
+
+1. What exact duplication or complexity does this remove?
+2. Why is the abstraction simpler than two explicit call sites?
+3. Will this still look like the obvious design six months from now?
+
+If you cannot answer clearly, do not add the abstraction.
+
+## Phase 4: Build
+
+Implement the change.
+
+Rules:
+- Minimal diff.
+- No speculative extensibility.
+- No drive-by cleanup.
+- No renames or refactors unless they make the actual change simpler.
+- If the simplest path conflicts with an explicit user constraint, stop and use AskUserQuestion.
+
+If complexity expands unexpectedly, use AskUserQuestion:
+
+```text
+This change is expanding beyond the simple path.
+
+A) Keep the narrow implementation — recommended
+B) Add the extra abstraction/layer now
+C) Stop and rethink the insertion point
+```
+
+## Phase 5: Verification
+
+1. Run the smallest relevant test or reproduction first.
+2. Add or update a focused regression test when behavior changed.
+3. Run the broader relevant test suite after the targeted check passes.
+4. If the code is user-facing, verify the user-visible path, not just internals.
+
+## Output
+
+End with:
+
+```text
+CARMACK BUILD REPORT
+System understanding: ...
+Chosen insertion point: ...
+What stayed explicit: ...
+What abstraction was avoided: ...
+Files changed: ...
+Verification: ...
+Status: DONE | DONE_WITH_CONCERNS | BLOCKED
+```
+
+## Anti-patterns
+
+- "Let's add a generic base class first."
+- "This might be useful for future features."
+- "Let's move this into a service layer" when a function in the owning module is clearer.
+- "Let's DRY this up" before the real shared shape exists.
+- "Let's make it configurable" when there is one real use case.

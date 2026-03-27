@@ -1,0 +1,134 @@
+---
+name: carmack-review
+preamble-tier: 3
+version: 1.0.0
+description: |
+  Carmack-style code review. Read past the diff to understand the subsystem, then
+  review for simplicity, modularity, local reasoning, and unnecessary abstraction.
+  Flags hidden state, scattered ownership, speculative indirection, and complexity
+  that makes future changes harder. Use when asked to "review this for simplicity",
+  "is this overengineered", "does this design make sense", or "review this like
+  Carmack". Proactively suggest when a change feels layered, abstract, or harder
+  to understand than the behavior requires.
+allowed-tools:
+  - Bash
+  - Read
+  - Grep
+  - Glob
+  - AskUserQuestion
+  - WebSearch
+---
+
+{{PREAMBLE}}
+
+{{BASE_BRANCH_DETECT}}
+
+# Carmack Review
+
+You are running `/carmack-review`.
+
+This is not a generic code review. Read enough surrounding code to understand the
+subsystem, then judge whether the change makes the system simpler or more tangled.
+Favor direct code that a strong engineer can understand in one sitting.
+
+## Review lens
+
+Review for these properties:
+
+1. **Subsystem understanding** — can you explain the touched codepath end-to-end?
+2. **Right ownership** — does the behavior live in the module that naturally owns it?
+3. **Local reasoning** — can a reader understand the change without bouncing through many layers?
+4. **Direct data flow** — is state explicit, or hidden behind callbacks, globals, config, or indirection?
+5. **Abstraction discipline** — did the change introduce an abstraction that is more complex than the concrete code it replaced?
+6. **Modularity** — are interfaces narrow and responsibilities cohesive?
+7. **Performance sanity** — any needless passes, allocations, or hot-path work?
+
+## Step 1: Understand the subsystem
+
+Before judging the diff:
+
+1. Read `git diff origin/<base>`.
+2. Read enough surrounding code to explain:
+   - entry point
+   - data flow
+   - ownership boundary
+   - state/invariants
+3. If the change uses unfamiliar framework behavior, verify the current best practice before criticizing it.
+
+Output:
+
+```text
+SUBSYSTEM MODEL
+Entry point: ...
+Flow: ...
+Owning module: ...
+Invariant / state: ...
+```
+
+Do not emit findings before this model exists.
+
+## Step 2: Find simplicity regressions
+
+Flag only real issues. Prioritize:
+
+- New layers that add indirection without removing real complexity
+- Service objects, factories, base classes, or registries where direct code would be clearer
+- Behavior scattered across too many files for the size of the feature
+- Hidden state, callback chains, or "magic" control flow
+- Configuration-driven behavior where one explicit codepath would be easier to read
+- Premature generalization for hypothetical future use
+- Hot-path inefficiency that comes from unnecessary abstraction
+
+## Step 3: Do not make these mistakes
+
+- Do **not** flag duplication when the duplicated code is clearer than the abstraction.
+- Do **not** reward cleverness.
+- Do **not** ask for a new layer just because the diff is "large".
+- Do **not** nitpick style when the structure is good.
+- Do **not** propose framework churn unless the current approach is clearly wrong.
+
+## Output format
+
+If issues exist:
+
+```text
+CARMACK REVIEW: N issues
+
+1. [file:line] Problem
+   Why it makes the system harder to understand: ...
+   Simpler direction: ...
+
+2. [file:line] Problem
+   Why it makes the system harder to understand: ...
+   Simpler direction: ...
+```
+
+If no issues exist:
+
+```text
+CARMACK REVIEW: no simplicity regressions found.
+```
+
+## Severity guidance
+
+**High severity**
+- Wrong ownership boundary
+- Hidden state or control flow that will create bugs
+- Abstraction that actively obscures behavior
+- Performance footgun in a hot path
+
+**Informational**
+- File scattering
+- Unnecessary helper extraction
+- Naming/interface choices that make local reasoning worse
+- Config or genericity that could become direct code
+
+## Final test
+
+For every finding, ask:
+
+1. Does this change make the subsystem easier to understand next month?
+2. Would the simpler alternative reduce moving parts, not just move them?
+3. Am I criticizing real complexity, or just a style preference?
+
+If you cannot defend the finding with those questions, drop it.

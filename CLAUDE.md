@@ -79,8 +79,10 @@ gstack/
 ├── design-review/    # /design-review skill (design audit + fix loop)
 ├── ship/            # Ship workflow skill
 ├── review/          # PR review skill
+├── carmack-review/  # /carmack-review skill (simplicity/modularity review)
 ├── plan-ceo-review/ # /plan-ceo-review skill
 ├── plan-eng-review/ # /plan-eng-review skill
+├── carmack-build/   # /carmack-build skill (simple, direct implementation mode)
 ├── autoplan/        # /autoplan skill (auto-review pipeline: CEO → design → eng)
 ├── benchmark/       # /benchmark skill (performance regression detection)
 ├── canary/          # /canary skill (post-deploy monitoring loop)

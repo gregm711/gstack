@@ -7,9 +7,11 @@ Detailed guides for every gstack skill — philosophy, workflow, and examples.
 | [`/office-hours`](#office-hours) | **YC Office Hours** | Start here. Six forcing questions that reframe your product before you write code. Pushes back on your framing, challenges premises, generates implementation alternatives. Design doc feeds into every downstream skill. |
 | [`/plan-ceo-review`](#plan-ceo-review) | **CEO / Founder** | Rethink the problem. Find the 10-star product hiding inside the request. Four modes: Expansion, Selective Expansion, Hold Scope, Reduction. |
 | [`/plan-eng-review`](#plan-eng-review) | **Eng Manager** | Lock in architecture, data flow, diagrams, edge cases, and tests. Forces hidden assumptions into the open. |
+| [`/carmack-build`](#carmack-build) | **Systems Builder** | Understand the subsystem first, then implement the simplest change that fully solves the problem. Direct code, local reasoning, no speculative abstractions. |
 | [`/plan-design-review`](#plan-design-review) | **Senior Designer** | Interactive plan-mode design review. Rates each dimension 0-10, explains what a 10 looks like, fixes the plan. Works in plan mode. |
 | [`/design-consultation`](#design-consultation) | **Design Partner** | Build a complete design system from scratch. Knows the landscape, proposes creative risks, generates realistic product mockups. Design at the heart of all other phases. |
 | [`/review`](#review) | **Staff Engineer** | Find the bugs that pass CI but blow up in production. Auto-fixes the obvious ones. Flags completeness gaps. |
+| [`/carmack-review`](#carmack-review) | **Systems Reviewer** | Read past the diff, understand the subsystem, then review for simplicity, modularity, local reasoning, and unnecessary abstraction. |
 | [`/investigate`](#investigate) | **Debugger** | Systematic root-cause debugging. Iron Law: no fixes without investigation. Traces data flow, tests hypotheses, stops after 3 failed fixes. |
 | [`/design-review`](#design-review) | **Designer Who Codes** | Live-site visual audit + fix loop. 80-item audit, then fixes what it finds. Atomic commits, before/after screenshots. |
 | [`/qa`](#qa) | **QA Lead** | Test your app, find bugs, fix them with atomic commits, re-verify. Auto-generates regression tests for every fix. |
@@ -220,6 +222,18 @@ Eng Review is the only required gate (disable with `gstack-config set skip_eng_r
 ### Plan-to-QA flow
 
 When `/plan-eng-review` finishes the test review section, it writes a test plan artifact to `~/.gstack/projects/`. When you later run `/qa`, it picks up that test plan automatically — your engineering review feeds directly into QA testing with no manual copy-paste.
+
+---
+
+## `/carmack-build`
+
+This is implementation mode for when you want the model to understand the subsystem first and then make the simplest correct change.
+
+The skill starts by forcing a small system model: entry point, data flow, owning module, existing code to reuse, and the likely simplest insertion point. Only after that does it code. That matters because a lot of overengineering is really just coding before understanding.
+
+The main bias is toward local reasoning. Prefer one explicit function over a mini-framework. Prefer editing the owning module over adding a new service layer. Prefer duplication over the wrong abstraction. If the change starts to sprawl into many files or new modules, it stops and questions the design before continuing.
+
+Use it when the main risk is not "will the code work?" but "will this become harder to understand than the feature deserves?"
 
 ---
 
@@ -448,6 +462,16 @@ That is the point of `/review`.
 
 I do not want flattery here.
 I want the model imagining the production incident before it happens.
+
+---
+
+## `/carmack-review`
+
+This is a code review lens for simplicity.
+
+Unlike `/review`, which is production-risk oriented, `/carmack-review` is structural. It reads past the diff, builds a subsystem model, and then asks whether the change improved or degraded the system's clarity. The focus is ownership, local reasoning, explicit state, direct data flow, and whether any new abstraction is actually simpler than the concrete code it replaced.
+
+It intentionally does **not** flag harmless duplication just to make things "DRY." It also avoids style nits. The goal is to catch the kinds of changes that technically work but make future work slower because the code got more layered, generic, or indirect than necessary.
 
 ---
 
@@ -807,6 +831,8 @@ Claude: Current version: 0.7.4
         What's new:
         - Browse handoff for CAPTCHAs and auth walls
         - /codex multi-AI second opinion
+        - /carmack-build simple, direct implementation mode
+        - /carmack-review simplicity/modularity review lens
         - /qa always uses browser now
         - Safety skills: /careful, /freeze, /guard
         - Proactive skill suggestions

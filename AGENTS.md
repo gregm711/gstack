@@ -13,9 +13,11 @@ Skills live in `.agents/skills/`. Invoke them by name (e.g., `/office-hours`).
 | `/office-hours` | Start here. Reframes your product idea before you write code. |
 | `/plan-ceo-review` | CEO-level review: find the 10-star product in the request. |
 | `/plan-eng-review` | Lock architecture, data flow, edge cases, and tests. |
+| `/carmack-build` | Implement with simple, modular, direct code. Understand the subsystem first. |
 | `/plan-design-review` | Rate each design dimension 0-10, explain what a 10 looks like. |
 | `/design-consultation` | Build a complete design system from scratch. |
 | `/review` | Pre-landing PR review. Finds bugs that pass CI but break in prod. |
+| `/carmack-review` | Review code for simplicity, modularity, and unnecessary abstraction. |
 | `/debug` | Systematic root-cause debugging. No fixes without investigation. |
 | `/design-review` | Design audit + fix loop with atomic commits. |
 | `/qa` | Open a real browser, find bugs, fix them, re-verify. |
